@@ -23,18 +23,20 @@ class TranslateNavigator extends StatelessWidget {
         );
       },
       child: Container(
-        height: 180,
+        height: 100,
         width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
           color: mainColor,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              height: 80,
-              width: 80,
+              height: 40,
+              width: 40,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(40),
                 color: secondryColor,
@@ -43,8 +45,8 @@ class TranslateNavigator extends StatelessWidget {
                 child: Image.asset(
                   'assets/icons/video.png',
                   color: Colors.white,
-                  height: 40,
-                  width: 40,
+                  height: 20,
+                  width: 20,
                 ),
               ),
             ),
@@ -53,7 +55,7 @@ class TranslateNavigator extends StatelessWidget {
               text,
               style: TextStyle(
                 fontFamily: 'Lexend',
-                fontSize: 21,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),

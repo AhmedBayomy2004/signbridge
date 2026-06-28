@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:signbride/screens/avatar_screen.dart';
 import 'package:signbride/screens/hand_tracker_screen.dart';
 import 'package:signbride/widgets/translate_navigator.dart';
 
@@ -18,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 20,
             children: [
               Row(
                 children: [
@@ -55,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: 50),
+
               Text(
                 'Start \nCommunicating',
                 style: TextStyle(
@@ -65,19 +67,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xff1E293B),
                 ),
               ),
-              SizedBox(height: 30),
+
               TranslateNavigator(
-                text: "Video Model",
+                text: "Video Model(For deaf people)",
                 mainColor: Color(0xff5D5FEF),
                 secondryColor: Color(0xff7d7ef1),
                 nextScreen: HandTrackerScreen(isVideo: true),
               ),
-              SizedBox(height: 16),
               TranslateNavigator(
-                text: "Picture Model",
+                text: "Picture Model(For deaf people)",
                 mainColor: Color(0xffFFC857),
                 secondryColor: Color(0xffFFD97D),
                 nextScreen: HandTrackerScreen(isVideo: false),
+              ),
+              TranslateNavigator(
+                text: "Avatar(For hearing people)",
+                mainColor: const Color(0xff00B894),
+                secondryColor: const Color(0xff55EFC4),
+                nextScreen: AvatarScreen(),
               ),
             ],
           ),

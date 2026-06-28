@@ -37,7 +37,8 @@ dependencies:
   csv: ^8.0.0
   hand_landmarker: ^2.2.0
   camera: ^0.11.4
-#  flutter_litert: ^2.0.11
+  flutter_embed_unity: ^2.0.0
+  flutter_embed_unity_2022_3_android:
 
 dev_dependencies:
   flutter_test:

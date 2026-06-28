@@ -50,6 +50,7 @@ flutter {
     source = "../.."
 }
 dependencies {
+    implementation(project(":unityLibrary"))
     // LiteRT same as TFLite 2.15+, supports FULLY_CONNECTED v12
     implementation("com.google.ai.edge.litert:litert:1.0.1")
     implementation("com.google.ai.edge.litert:litert-support:1.0.1")
