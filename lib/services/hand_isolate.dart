@@ -1,4 +1,4 @@
-import 'dart:isolate';
+/*import 'dart:isolate';
 import 'package:camera/camera.dart';
 import 'package:hand_landmarker/hand_landmarker.dart';
 
@@ -43,3 +43,4 @@ void handIsolateEntry(List<dynamic> args) {
     }
   });
 }
+*/

@@ -16,11 +16,7 @@ class SettingsScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 // Call the method to send a message to Unity
-                sendToUnity(
-                  'AppManager',
-                  'ReceiveSentenceFromFlutter',
-                  'السلام',
-                );
+                sendToUnity('AppManager', 'SetCharacterFromFlutter', '2');
               },
               child: const Text('Send Message to Unity'),
             ),

@@ -2,82 +2,77 @@ import 'dart:math' as math;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:hand_landmarker/hand_landmarker.dart';
+import 'package:hand_detection/hand_detection.dart';
 
 class LandmarkPainter extends CustomPainter {
   LandmarkPainter({
     required this.handsNotifier,
-    required this.previewSize,
+   // required this.previewSize,
     required this.lensDirection,
-    required this.sensorOrientation,
+    //required this.sensorOrientation,
   }) : super(repaint: handsNotifier);
 
   final ValueNotifier<List<Hand>> handsNotifier;
-  final Size previewSize;
+  
   final CameraLensDirection lensDirection;
-  final int sensorOrientation;
+  
 
-  static final _pointPaint = Paint()
+  static final Paint pointPaint = Paint()
     ..color = Colors.red
-    ..strokeCap = StrokeCap.round;
+    ..style = PaintingStyle.fill;
 
-  static final _linePaint = Paint()..color = Colors.lightBlueAccent;
+  static final Paint linePaint = Paint()
+    ..color = Colors.green
+    ..strokeWidth = 3;
 
   @override
   void paint(Canvas canvas, Size size) {
     final hands = handsNotifier.value;
     if (hands.isEmpty) return;
 
-    final scale = size.width / previewSize.height;
-    _pointPaint.strokeWidth = 8 / scale;
-    _linePaint.strokeWidth = 4 / scale;
+    // Detector image size (NOT CameraPreview size)
+    final imageWidth = hands.first.imageWidth.toDouble();
+    final imageHeight = hands.first.imageHeight.toDouble();
 
-    canvas.save();
+    // Same scaling used by CameraPreview
+    final scale = math.max(size.width / imageWidth, size.height / imageHeight);
 
-    final center = Offset(size.width / 2, size.height / 2);
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(sensorOrientation * math.pi / 180);
+    final scaledWidth = imageWidth * scale;
+    final scaledHeight = imageHeight * scale;
 
-    if (lensDirection == CameraLensDirection.front) {
-      canvas.scale(-1, 1);
-      canvas.rotate(math.pi);
+    final offsetX = (size.width - scaledWidth) / 2;
+    final offsetY = (size.height - scaledHeight) / 2;
+
+    Offset mapPoint(HandLandmark lm) {
+      double x = lm.x;
+      double y = lm.y;
+
+      // Mirror for front camera
+      if (lensDirection == CameraLensDirection.front) {
+        x = imageWidth - x;
+      }
+
+      return Offset(x * scale + offsetX, y * scale + offsetY);
     }
-
-    canvas.scale(scale);
-
-    final logicalWidth = previewSize.width;
-    final logicalHeight = previewSize.height;
 
     for (final hand in hands) {
+      // Draw connections
       for (final connection in HandLandmarkConnections.connections) {
-        final start = hand.landmarks[connection[0]];
-        final end = hand.landmarks[connection[1]];
-        canvas.drawLine(
-          Offset(
-            (start.x - 0.5) * logicalWidth,
-            (start.y - 0.5) * logicalHeight,
-          ),
-          Offset((end.x - 0.5) * logicalWidth, (end.y - 0.5) * logicalHeight),
-          _linePaint,
-        );
+        final p1 = mapPoint(hand.landmarks[connection[0]]);
+        final p2 = mapPoint(hand.landmarks[connection[1]]);
+
+        canvas.drawLine(p1, p2, linePaint);
       }
-      for (final landmark in hand.landmarks) {
-        canvas.drawCircle(
-          Offset(
-            (landmark.x - 0.5) * logicalWidth,
-            (landmark.y - 0.5) * logicalHeight,
-          ),
-          8 / scale,
-          _pointPaint,
-        );
+
+      // Draw landmarks
+      for (final lm in hand.landmarks) {
+        canvas.drawCircle(mapPoint(lm), 5, pointPaint);
       }
     }
-
-    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(LandmarkPainter old) => false;
+  bool shouldRepaint(covariant LandmarkPainter oldDelegate) => true;
 }
 
 class HandLandmarkConnections {
@@ -105,5 +100,3 @@ class HandLandmarkConnections {
     [19, 20],
   ];
 }
-
-/// A custom painter that renders the hand landmarks and connections.
