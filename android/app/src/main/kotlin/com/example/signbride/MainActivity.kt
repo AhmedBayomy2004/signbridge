@@ -98,7 +98,7 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
-        val outputArray = Array(1) { FloatArray(18) }
+        val outputArray = Array(1) { FloatArray(39) }
         interpreter!!.run(inputArray, outputArray)
         return outputArray[0].map { it.toDouble() }
     }

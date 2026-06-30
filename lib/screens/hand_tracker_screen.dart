@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:isolate';
+import 'dart:math';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:hand_landmarker/hand_landmarker.dart';
@@ -22,7 +23,7 @@ class HandTrackerScreen extends StatefulWidget {
 }
 
 class _HandTrackerScreenState extends State<HandTrackerScreen> {
-  CameraController? _controller;
+  CameraController? _cameraController;
   CameraDescription? _currentCamera;
 
   Isolate? _isolate;
@@ -92,7 +93,7 @@ class _HandTrackerScreenState extends State<HandTrackerScreen> {
       orElse: () => _cameras.first,
     );
 
-    _controller = CameraController(
+    _cameraController = CameraController(
       _currentCamera!,
       ResolutionPreset.low,
       enableAudio: false,
@@ -106,8 +107,8 @@ class _HandTrackerScreenState extends State<HandTrackerScreen> {
     _isolateSendPort = await _setupPort!.first as SendPort;
     _setupPort!.close();
 
-    await _controller!.initialize();
-    await _controller!.startImageStream(_processCameraImage);
+    await _cameraController!.initialize();
+    await _cameraController!.startImageStream(_processCameraImage);
 
     if (mounted) setState(() => _isInitialized = true);
   }
@@ -118,8 +119,8 @@ class _HandTrackerScreenState extends State<HandTrackerScreen> {
     if (mounted) setState(() => _isInitialized = false);
 
     // Clean up current running camera and the isolates
-    await _controller?.stopImageStream();
-    await _controller?.dispose();
+    await _cameraController?.stopImageStream();
+    await _cameraController?.dispose();
     _isolateSendPort?.send('dispose');
     _isolate?.kill(priority: Isolate.immediate);
 
@@ -140,8 +141,8 @@ class _HandTrackerScreenState extends State<HandTrackerScreen> {
 
   @override
   void dispose() {
-    _controller?.stopImageStream();
-    _controller?.dispose();
+    _cameraController?.stopImageStream();
+    _cameraController?.dispose();
     _isolateSendPort?.send('dispose');
     _isolate?.kill(priority: Isolate.immediate);
     _handsNotifier.dispose();
@@ -165,7 +166,7 @@ class _HandTrackerScreenState extends State<HandTrackerScreen> {
       _isolateSendPort!.send(
         FrameRequest(
           image,
-          _controller!.description.sensorOrientation,
+          _cameraController!.description.sensorOrientation,
           replyPort.sendPort,
         ),
       );
@@ -199,6 +200,43 @@ class _HandTrackerScreenState extends State<HandTrackerScreen> {
               .expand((e) => e)
               .toList();
 
+          // Normalize this hand
+          double centerX = 0, centerY = 0, centerZ = 0;
+
+          for (int i = 0; i < 63; i += 3) {
+            centerX += landmarks[i];
+            centerY += landmarks[i + 1];
+            centerZ += landmarks[i + 2];
+          }
+
+          centerX /= 21;
+          centerY /= 21;
+          centerZ /= 21;
+
+          double maxDistance = 0;
+
+          for (int i = 0; i < 63; i += 3) {
+            landmarks[i] -= centerX;
+            landmarks[i + 1] -= centerY;
+            landmarks[i + 2] -= centerZ;
+
+            double distance = sqrt(
+              landmarks[i] * landmarks[i] +
+                  landmarks[i + 1] * landmarks[i + 1] +
+                  landmarks[i + 2] * landmarks[i + 2],
+            );
+
+            if (distance > maxDistance) {
+              maxDistance = distance;
+            }
+          }
+
+          if (maxDistance > 0) {
+            for (int i = 0; i < 63; i++) {
+              landmarks[i] /= maxDistance;
+            }
+          }
+
           double thumbMcpX = hand.landmarks[2].x;
           double pinkyMcpX = hand.landmarks[17].x;
           bool isRightHand = thumbMcpX < pinkyMcpX;
@@ -211,14 +249,6 @@ class _HandTrackerScreenState extends State<HandTrackerScreen> {
         }
 
         List<double> frame = [...leftHandFrame, ...rightHandFrame];
-
-        int currentIndex = 0;
-        frame = frame.map((value) {
-          double normalizedValue =
-              (value - _meanList[currentIndex]) / _stdList[currentIndex];
-          currentIndex++;
-          return normalizedValue;
-        }).toList();
 
         buffer.add(frame);
       }
@@ -254,8 +284,11 @@ class _HandTrackerScreenState extends State<HandTrackerScreen> {
         maxIndex = i;
       }
     }
-    _outputWordNotifier.value = classes[maxIndex];
-    _confidenceNotifier.value = maxValue;
+    if (maxValue != _confidenceNotifier.value) {
+      // avoid updating if the output is the same
+      _outputWordNotifier.value = classes[maxIndex];
+      _confidenceNotifier.value = maxValue;
+    }
   }
 
   @override
@@ -264,8 +297,8 @@ class _HandTrackerScreenState extends State<HandTrackerScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final controller = _controller!;
-    final previewSize = controller.value.previewSize!;
+    final cameraController = _cameraController!;
+    final previewSize = cameraController.value.previewSize!;
     final previewAspectRatio = previewSize.height / previewSize.width;
 
     return Scaffold(
@@ -275,14 +308,15 @@ class _HandTrackerScreenState extends State<HandTrackerScreen> {
           aspectRatio: previewAspectRatio,
           child: Stack(
             children: [
-              CameraPreview(controller),
+              CameraPreview(cameraController),
               CustomPaint(
                 size: Size.infinite,
                 painter: LandmarkPainter(
                   handsNotifier: _handsNotifier,
                   previewSize: previewSize,
-                  lensDirection: controller.description.lensDirection,
-                  sensorOrientation: controller.description.sensorOrientation,
+                  lensDirection: cameraController.description.lensDirection,
+                  sensorOrientation:
+                      cameraController.description.sensorOrientation,
                 ),
               ),
 
