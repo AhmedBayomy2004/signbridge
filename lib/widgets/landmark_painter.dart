@@ -5,17 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:hand_detection/hand_detection.dart';
 
 class LandmarkPainter extends CustomPainter {
-  LandmarkPainter({
-    required this.handsNotifier,
-   // required this.previewSize,
-    required this.lensDirection,
-    //required this.sensorOrientation,
-  }) : super(repaint: handsNotifier);
+  LandmarkPainter({required this.handsNotifier, required this.lensDirection})
+    : super(repaint: handsNotifier);
 
   final ValueNotifier<List<Hand>> handsNotifier;
-  
+
   final CameraLensDirection lensDirection;
-  
 
   static final Paint pointPaint = Paint()
     ..color = Colors.red
